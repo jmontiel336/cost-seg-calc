@@ -184,6 +184,8 @@
   .req { color: #e05555; margin-left: 2px; }
   #reno-cost-field { display: none; }
 </style>
+
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 </head>
 <body>
 
@@ -967,20 +969,43 @@ function submitLead() {
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { alert(g('alertEmail')); return; }
   if (!phone) { alert(g('alertPhone')); return; }
 
-  // Lead data — EmailJS wiring coming soon
-  console.log('TSG Lead:', {
-    name, email, phone,
+  const templateParams = {
+    from_name: name,
+    reply_to: email,
+    phone: phone,
     language: lang === 'es' ? 'Spanish' : 'English',
     location: (document.getElementById('prop-city').value + ', ' + document.getElementById('prop-state').value).trim(),
-    propertyType: selections['proptype'],
-    purchasePrice: document.getElementById('purchase-price').value,
-    yearPlaced: document.getElementById('year-placed').value,
-    estimatedBonus: document.getElementById('res-amount').textContent,
-    filingType: selections['filingtype'],
-    incomeRange: selections['income'],
-    repStatus: selections['rep'],
-    hasGarage: selections['hasGarage']
-  });
+    property_type: selections['proptype'] || 'N/A',
+    purchase_price: document.getElementById('purchase-price').value || 'N/A',
+    year_placed: document.getElementById('year-placed').value || 'N/A',
+    estimated_bonus: document.getElementById('res-amount').textContent,
+    filing_type: selections['filingtype'] || 'N/A',
+    income_range: selections['income'] || 'N/A',
+    rep_status: selections['rep'] || 'N/A',
+    has_garage: selections['hasGarage'] || 'N/A'
+  };
+
+  const EMAILJS_PUBLIC_KEY  = '6-TREVLPgbGT2AFow';
+  const EMAILJS_SERVICE_ID  = 'service_lbsdallas';
+  const EMAILJS_TEMPLATE_ID = 'template_1wohl7u';
+
+  const btn = document.getElementById('btn-submit');
+  btn.textContent = lang === 'es' ? 'Enviando…' : 'Sending…';
+  btn.disabled = true;
+
+  emailjs.init(EMAILJS_PUBLIC_KEY);
+  emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, templateParams)
+    .then(() => {
+      goTo(5);
+      document.querySelector('.progress-header').style.display = 'none';
+    })
+    .catch(err => {
+      console.error('EmailJS error:', err);
+      btn.textContent = lang === 'es' ? 'Programar Mi Llamada Gratuita' : 'Schedule My Free Call';
+      btn.disabled = false;
+      alert(lang === 'es' ? 'Hubo un error al enviar. Por favor llámenos directamente.' : 'There was an error submitting. Please call us directly at (214) 390-0017.');
+    });
+}
 
   goTo(5);
   document.querySelector('.progress-header').style.display = 'none';
